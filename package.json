@@ -16,7 +16,7 @@
     "@nanostores/persistent": "^0.10.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "astro": "^4.16.14",
+    "astro": "^5.0.5",
     "gcode-preview": "^2.18.0",
     "nanostores": "^0.11.3",
     "react": "^18.3.1",
