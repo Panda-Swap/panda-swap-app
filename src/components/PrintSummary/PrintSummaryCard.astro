@@ -19,9 +19,21 @@ const printerModels = calculatePrinterModels(initialFiles);
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100" data-i18n="printSummary.title"></h3>
       <div id="total-cost" class="text-sm text-gray-600 dark:text-gray-400 mt-1"></div>
     </div>
-    <CompileButton disabled={initialFiles.length === 0} />
+    <div class="flex gap-2">
+      <button
+        id="compile-button"
+        disabled={initialFiles.length === 0}
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        data-i18n="printSummary.compileGcode"
+      ></button>
+      <button
+        id="compile-3mf-button"
+        disabled={initialFiles.length === 0}
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        data-i18n="printSummary.compile3mf"
+      ></button>
+    </div>
   </div>
-  
   <div class="grid grid-cols-1 gap-6">
     <div>
       <TotalStats totalTime={totalTime} />

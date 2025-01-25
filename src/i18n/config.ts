@@ -45,6 +45,7 @@ export type TranslationKeys = {
     printSummary: {
         title: string;
         compileGcode: string;
+        compile3mf: string;
         totalPrintTime: string;
         totalCost: string;
         printer: {

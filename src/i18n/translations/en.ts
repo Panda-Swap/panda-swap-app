@@ -44,7 +44,8 @@ const translations: TranslationKeys = {
   },
   printSummary: {
     title: "Print Summary",
-    compileGcode: "Compile",
+    compileGcode: "Download gcode",
+    compile3mf: "Download 3mf",
     totalPrintTime: "Total print time: {time}",
     totalCost: "Total cost: {cost}",
     printer: {
