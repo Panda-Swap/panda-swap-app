@@ -8,7 +8,7 @@ Open Source GCode merger to be used with Panda Swap
 
 ## Demo
 
-[Live Demo](https://nikpcenicni.github.io/panda-swap-app)
+[Live Demo](https://panda-swap.github.io/panda-swap-app)
 
 
 ## 👀 Want to learn more?

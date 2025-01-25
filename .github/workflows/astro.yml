@@ -79,7 +79,7 @@ jobs:
 
   deploy:
     environment:
-      name: github-pages
+      name: Panda Swap App
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
