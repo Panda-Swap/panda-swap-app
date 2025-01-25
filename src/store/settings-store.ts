@@ -16,7 +16,14 @@ export const DEFAULT_SETTINGS: Settings = {
     compactMode: true,
   },
   gcode: {
-    buildPlateSwap: "",
+    buildPlateSwap: `G1 Z180 F3000
+G1 Y186 F6000
+G1 Z185 F3000
+G1 Y-4  F6000
+G1 Y186 F6000
+G1 Y-4  F6000
+G1 Y2.5 F6000
+G1 Y-4  F6000`,
   }
 };
 
