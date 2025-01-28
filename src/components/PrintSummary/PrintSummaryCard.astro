@@ -66,46 +66,60 @@ const t = (key: string) => translations.t(key);
 
           <div class="flex items-center gap-4">
             <div 
-              id="thumbnail-preview" 
-              class="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg 
-                     flex items-center justify-center bg-gray-50 dark:bg-gray-700"
-            >
-              <svg 
-                class="w-8 h-8 text-gray-400 dark:text-gray-500" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round" 
-                  stroke-width="2" 
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                >
-                </path>
-              </svg>
-            </div>
-            <div class="space-y-2 flex-1">
-              <input
-              type="file"
-              id="thumbnail-input"
-              accept="image/*"
-              data-browse-text={t('fileUpload.browse')}
-              data-no-file-text={t('fileUpload.noFileSelected')}
-              aria-labelledby="thumbnail-input-label"
-              class="w-full text-sm text-gray-500 dark:text-gray-400
-               file:mr-4 file:py-2 file:px-4
-               file:rounded-md file:border-0
-               file:text-sm file:font-semibold
-               file:bg-blue-50 file:text-blue-700
-               hover:file:bg-blue-100
-               dark:file:bg-gray-700 dark:file:text-gray-200"
+            id="thumbnail-preview" 
+            class="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg 
+                   flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden"
+          >
+            <img 
+              id="preview-image"
+              src=""
+              alt="Thumbnail preview"
+              class="hidden max-w-full max-h-full object-contain"
             />
+            <svg 
+              id="placeholder-icon"
+              class="w-8 h-8 text-gray-400 dark:text-gray-500" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                stroke-linecap="round" 
+                stroke-linejoin="round" 
+                stroke-width="2" 
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              >
+              </path>
+            </svg>
+          </div>
+            <div class="space-y-2 flex-1 center flex flex-col">
+              <button
+              type="button"
+              id="thumbnail-button"
+              class="inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-sm font-semibold
+                bg-blue-50 text-blue-700 hover:bg-blue-100
+                dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600
+                transition-colors duration-200 ease-in-out
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                dark:focus:ring-offset-gray-800"
+              aria-controls="thumbnail-input"
+            >
+              <span translate="yes" data-i18n-key="fileUpload.browse">{t('fileUpload.browse')}</span>
+            </button>
+              <input
+                type="file"
+                id="thumbnail-input"
+                accept="image/*"
+                class="sr-only"
+                aria-label={t('printSummary.thumbnailInput')}
+              />
+              
               <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n-key="printSummary.thumbnailTips">
                 {t('printSummary.thumbnailTips')}
               </p>
             </div>
+            
           </div>
         </div>
 
@@ -137,11 +151,64 @@ const t = (key: string) => translations.t(key);
   import { languageStore } from '../../store/language-store';
   import { useTranslations } from '../../i18n/utils';
   
-  // Define a custom event interface
-  interface LanguageChangeEvent extends Event {
-    detail: {
-      language: string;
-    };
+  // Initialize elements
+  const thumbnailButton = document.getElementById('thumbnail-button');
+  const thumbnailInput = document.getElementById('thumbnail-input') as HTMLInputElement;
+  const printSummaryCard = document.getElementById('print-summary-card');
+
+    // Set up file input and button functionality
+    if (thumbnailButton && thumbnailInput) {
+    thumbnailButton.addEventListener('click', ((e: MouseEvent) => {
+      e.preventDefault();
+      thumbnailInput.click();
+    }) as EventListener);
+
+    // Handle file selection
+    thumbnailInput.addEventListener('change', ((e: Event) => {
+      const input = e.target as HTMLInputElement;
+      const buttonText = document.querySelector('#thumbnail-button span');
+      const previewImage = document.getElementById('preview-image') as HTMLImageElement;
+      const placeholderIcon = document.getElementById('placeholder-icon');
+      const { t } = useTranslations(languageStore.get());
+      
+      if (input.files && input.files.length > 0) {
+        const file = input.files[0];
+        const fileName = file.name;
+        
+        // Update button text
+        if (buttonText) {
+          buttonText.textContent = fileName;
+        }
+        input.setAttribute('title', fileName);
+
+        // Show image preview
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            if (previewImage && placeholderIcon && e.target?.result) {
+              previewImage.src = e.target.result as string;
+              previewImage.classList.remove('hidden');
+              placeholderIcon.classList.add('hidden');
+            }
+          };
+          
+          reader.readAsDataURL(file);
+        }
+      } else {
+        // Reset to initial state
+        if (buttonText) {
+          buttonText.textContent = t('fileUpload.browse');
+        }
+        input.setAttribute('title', t('fileUpload.noFileSelected'));
+        
+        if (previewImage && placeholderIcon) {
+          previewImage.src = '';
+          previewImage.classList.add('hidden');
+          placeholderIcon.classList.remove('hidden');
+        }
+      }
+    }) as EventListener);
   }
   
   function updateTranslations(currentLang: string) {
@@ -165,58 +232,65 @@ const t = (key: string) => translations.t(key);
         }
       }
     });
+
+    // Update file input button
+    updateFileInputButton(currentLang);
   }
 
-  function updateFileInputTranslations(currentLang: string) {
-  const { t } = useTranslations(currentLang);
+  function updateFileInputButton(currentLang: string) {
+    const { t } = useTranslations(currentLang);
+    const buttonText = document.querySelector('#thumbnail-button span');
+    if (buttonText && (!thumbnailInput?.files?.length)) {
+      buttonText.textContent = t('fileUpload.browse');
+    }
+  }
 
-  // Update file input translations
-  const thumbnailInput = document.getElementById('thumbnail-input') as HTMLInputElement;
-  
-  if (thumbnailInput) {
-    // Update browse button text
-    const style = document.createElement('style');
-    style.textContent = `
-      #thumbnail-input::file-selector-button {
-        content: "${t('fileUpload.browse')}";
-      }
-    `;
-    document.head.appendChild(style);
+  // Set up file input and button functionality
+  if (thumbnailButton && thumbnailInput) {
+    thumbnailButton.addEventListener('click', ((e: MouseEvent) => {
+      e.preventDefault();
+      thumbnailInput.click();
+    }) as EventListener);
 
-    // Handle file selection text
-    thumbnailInput.addEventListener('change', (e) => {
+    // Handle file selection
+    thumbnailInput.addEventListener('change', ((e: Event) => {
       const input = e.target as HTMLInputElement;
-      const noFileText = t('fileUpload.noFileSelected');
+      const buttonText = document.querySelector('#thumbnail-button span');
+      const { t } = useTranslations(languageStore.get());
       
       if (input.files && input.files.length > 0) {
         const fileName = input.files[0].name;
+        if (buttonText) {
+          buttonText.textContent = fileName;
+        }
         input.setAttribute('title', fileName);
       } else {
-        input.setAttribute('title', noFileText);
+        if (buttonText) {
+          buttonText.textContent = t('fileUpload.browse');
+        }
+        input.setAttribute('title', t('fileUpload.noFileSelected'));
       }
-    });
+    }) as EventListener);
   }
-}
-  
+
   // Initial setup
-  const printSummaryCard = document.getElementById('print-summary-card');
   const initialLang = printSummaryCard?.dataset.initialLang || 'en';
   updateTranslations(initialLang);
   
-  // Listen for language change events
-  window.addEventListener('language-change', ((event: LanguageChangeEvent) => {
-    const newLang = event.detail.language;
+  // Event listeners for language changes
+  window.addEventListener('language-change', ((e: Event) => {
+    const customEvent = e as CustomEvent<{ language: string }>;
+    const newLang = customEvent.detail.language;
     updateTranslations(newLang);
   }) as EventListener);
   
-  // Listen for translation update events
   window.addEventListener('translation-update', (() => {
     const currentLang = languageStore.get();
     updateTranslations(currentLang);
   }) as EventListener);
   
-  // Listen to language store changes
+  // Store subscription
   languageStore.subscribe((newLang) => {
     updateTranslations(newLang);
   });
-  </script>
+</script>

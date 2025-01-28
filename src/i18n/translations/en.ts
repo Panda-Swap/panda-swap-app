@@ -41,6 +41,7 @@ const translations: TranslationKeys = {
     browse: 'Browse files',
     fileListLabel: 'File List',
     inputLabel: 'File Input',
+    noFileSelected: 'No file selected',
   },
   printSummary: {
     exportName: "Custom Export Name",

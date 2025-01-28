@@ -40,7 +40,8 @@ export type TranslationKeys = {
       or: string;
       browse: string;
       fileListLabel: string;
-      inputLabel: string
+      inputLabel: string;
+      noFileSelected: string;
     };
     printSummary: {
         exportName: string;
