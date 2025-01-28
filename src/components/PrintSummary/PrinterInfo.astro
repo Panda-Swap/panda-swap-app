@@ -194,7 +194,7 @@ const currentSystem = getCurrentSystem(settings);
 
 <script>
 import { getSettings, updateSettings } from '../../store/settings-store';
-import { SWAP_SYSTEMS, type SwapSystemType } from '../../constants/printer';
+import { DEFAULT_SWAP_SYSTEM, SWAP_SYSTEMS, type SwapSystemType } from '../../constants/printer';
 
 // DOM elements
 const configButton = document.getElementById('toggle-settings');
@@ -227,13 +227,10 @@ if (swapSystemSelect && gcodeTextarea) {
     const currentSettings = getSettings();
     
     if (selectedSystem === 'custom') {
-      // When switching to custom mode, ALWAYS use the stored custom config
-      // and NEVER overwrite it with the current gcode
-      if (currentSettings.custom.buildPlateSwap) {
-        // If we have a custom config, use it
+      // Custom mode handling
+      if (currentSettings.custom?.buildPlateSwap) {
         gcodeTextarea.value = currentSettings.custom.buildPlateSwap;
         
-        // Update only the working gcode
         updateSettings({
           ...currentSettings,
           gcode: {
@@ -242,11 +239,9 @@ if (swapSystemSelect && gcodeTextarea) {
           }
         });
       } else {
-        // If no custom config exists, create it from current gcode
         const newCustomGcode = currentSettings.gcode.buildPlateSwap;
         gcodeTextarea.value = newCustomGcode;
         
-        // Create the initial custom config
         updateSettings({
           ...currentSettings,
           custom: {
@@ -262,13 +257,13 @@ if (swapSystemSelect && gcodeTextarea) {
       
       gcodeTextarea.readOnly = false;
       
-    } else if (selectedSystem in SWAP_SYSTEMS) {
-      // When switching to a preset, ONLY update the working gcode
-      const newGcode = SWAP_SYSTEMS[selectedSystem as SwapSystemType].gcode;
+    } else {
+      // Preset system handling - use type assertion to ensure type safety
+      const systemKey = selectedSystem as keyof typeof SWAP_SYSTEMS;
+      const newGcode = SWAP_SYSTEMS[systemKey].gcode;
       gcodeTextarea.value = newGcode;
       gcodeTextarea.readOnly = true;
 
-      // Only update the working gcode, preserve custom config exactly as is
       updateSettings({
         ...currentSettings,
         gcode: {
@@ -280,6 +275,20 @@ if (swapSystemSelect && gcodeTextarea) {
   });
 }
 
+const initializeSwapSystem = () => {
+  const currentSettings = getSettings();
+  
+  if (!currentSettings.gcode?.buildPlateSwap) {
+    updateSettings({
+      ...currentSettings,
+      gcode: {
+        ...currentSettings.gcode,
+        buildPlateSwap: SWAP_SYSTEMS[DEFAULT_SWAP_SYSTEM].gcode
+      }
+    });
+  }
+};
+
 // Handle custom G-code edits
 if (gcodeTextarea) {
   gcodeTextarea.addEventListener('input', (e) => {
@@ -288,7 +297,6 @@ if (gcodeTextarea) {
     const currentSettings = getSettings();
 
     if (selectedSystem === 'custom') {
-      // When in custom mode, update both storages
       const newValue = target.value;
       
       updateSettings({
@@ -305,6 +313,7 @@ if (gcodeTextarea) {
     }
   });
 }
+
 // Handle G-code editor toggle
 if (gcodeToggle && gcodeEditor) {
   gcodeToggle.addEventListener('click', () => {

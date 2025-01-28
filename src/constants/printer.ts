@@ -1,4 +1,7 @@
 // constants/printer.ts
+export type PresetSwapSystem = keyof typeof SWAP_SYSTEMS;
+export const DEFAULT_SWAP_SYSTEM: PresetSwapSystem ='abpc';
+
 export const SWAP_SYSTEMS = {
     none: {
       name: "No Swap System",

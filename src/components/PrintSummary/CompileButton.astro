@@ -10,16 +10,6 @@ const { class: className = '' } = Astro.props;
 ---
 
 <div class={`flex gap-3 ${className}`}>
-  <!-- <button
-    id="compile-button"
-    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm 
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600
-           transition-colors duration-200"
-    disabled
-    data-i18n-key="printSummary.compileGcode"
-  >
-  {t('printSummary.compileGcode')}
-  </button> -->
   <button
     id="compile-3mf-button"
     class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm 
@@ -62,28 +52,28 @@ const { class: className = '' } = Astro.props;
     // Update button states based on file store
     filesStore.subscribe(files => {
       const hasFiles = files.length > 0;
-      compileButton.disabled = !hasFiles;
+      // compileButton.disabled = !hasFiles;
       compile3mfButton.disabled = !hasFiles;
     });
 
-    // GCode export handler
-    compileButton.addEventListener('click', async () => {
-      try {
-        const files = filesStore.get();
-        if (files.length > 0) {
-          compileButton.disabled = true;
-          compileButton.textContent = 'Exporting...';
+    // // GCode export handler
+    // compileButton.addEventListener('click', async () => {
+    //   try {
+    //     const files = filesStore.get();
+    //     if (files.length > 0) {
+    //       compileButton.disabled = true;
+    //       compileButton.textContent = 'Exporting...';
 
-          const compiledGCode = compileGCode(files);
-          downloadGCode(compiledGCode, getExportOptions());
-        }
-      } catch (error) {
-        console.error('Error exporting GCode:', error);
-      } finally {
-        compileButton.disabled = false;
-        compileButton.textContent = 'Export GCode';
-      }
-    });
+    //       const compiledGCode = compileGCode(files);
+    //       downloadGCode(compiledGCode, getExportOptions());
+    //     }
+    //   } catch (error) {
+    //     console.error('Error exporting GCode:', error);
+    //   } finally {
+    //     compileButton.disabled = false;
+    //     compileButton.textContent = 'Export GCode';
+    //   }
+    // });
 
     // 3MF export handler
     compile3mfButton.addEventListener('click', async () => {
