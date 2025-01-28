@@ -1,0 +1,26 @@
+---
+interface Props {
+  for: string;
+  children: string;
+  id?: string;
+  "data-i18n-key"?: string;
+  class?: string;
+}
+
+const { 
+  for: htmlFor, 
+  children, 
+  id, 
+  "data-i18n-key": dataI18nKey,
+  class: className 
+} = Astro.props;
+---
+
+<label 
+  for={htmlFor} 
+  id={id} 
+  data-i18n-key={dataI18nKey}
+  class={className}
+>
+  {children}
+</label>
