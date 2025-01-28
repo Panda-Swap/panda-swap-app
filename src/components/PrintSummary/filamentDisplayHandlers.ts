@@ -9,9 +9,10 @@ export function updateFilamentDisplay(files: readonly GCodeFile[], settings: any
   if (!totalUsageElement || !totalCostElement) return;
 
   const usageData = calculateFilamentUsage(files, settings);
+  const lang = getCurrentLanguage();
   
   // Update filament usage display
-  totalUsageElement.innerHTML = generateFilamentDisplayHTML(usageData, settings);
+  totalUsageElement.innerHTML = generateFilamentDisplayHTML(usageData, settings, lang);
   
   // Update total cost if enabled
   if (settings.display.showTotalCost) {

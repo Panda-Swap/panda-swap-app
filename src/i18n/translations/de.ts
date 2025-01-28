@@ -43,18 +43,30 @@ const translations: TranslationKeys = {
     inputLabel: 'Datei-Eingabe',
   },
   printSummary: {
-    title: "Zusammenfassung drucken",
+    exportName: "Benutzerdefinierter Exportname",
+    exportNamePlaceholder: "Geben Sie einen Namen für den Export ein",
+    exportNameTips: "Dies wird der Name der exportierten Datei sein. Lassen Sie ihn leer, um den Standardnamen zu verwenden.",
+    thumbnail: "Vorschaubild",
+    thumbnailTips: "Das Bild wird auf 512x512 und 128x128 für Miniaturansichten verkleinert.",
+    thumbnailError: "Fehler bei der Verarbeitung eines Bildes. Bitte stellen Sie sicher, dass es sich um eine gültige Bilddatei handelt.",
     compileGcode: "Kompilieren",
+    compile3mf: "3mf herunterladen",
     totalPrintTime: "Gesamtdruckzeit: {time}",
     totalCost: "Gesamtkosten: {cost}",
     printer: {
-      single: "Drucker: {name}",
-      multiple: "Drucker: {names}"
+      settings: "Drucker-Einstellungen",
+      model: "Drucker-Modell",
+      buildVolume: "Volumen aufbauen",
+      width: "Breite",
+      depth: "Tiefe",
+      height: "Höhe",
     },
     filament: {
       slot: "Filament {number}",
       weight: "{amount}g",
-      cost: "${amount}"
+      cost: "${amount}",
+      noFilament: "Noch keine Dateien hochgeladen",
+      noFilamentTip: "Laden Sie einige G-Code-Dateien hoch, um die Filamentnutzung zu sehen",
     }
   },
   fileList: {

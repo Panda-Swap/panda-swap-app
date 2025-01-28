@@ -9,23 +9,24 @@ const currentLang = getCurrentLanguage();
 const { t } = useTranslations(currentLang);
 const availableLanguages = getAvailableLanguages();
 ---
+
 <div class="relative" id="language-selector-root">
-  <LanguageButton
-    currentLang={currentLang}
-    label={t('common.language')}
-  />
-  <LanguageDropdown
-    languages={availableLanguages}
-    currentLang={currentLang}
-  />
+<LanguageButton
+  currentLang={currentLang}
+  label={t('common.language')}
+/>
+<LanguageDropdown
+  languages={availableLanguages}
+  currentLang={currentLang}
+/>
 </div>
 
 <script>
-  import { languageStore } from '../../store/language-store.ts';
-  import { setupLanguageHandlers } from '../../utils/i18n/language-handlers.ts';
-  import { setLanguage } from '../../i18n/utils';
+import { languageStore } from '../../store/language-store.ts';
+import { setupLanguageHandlers } from '../../utils/i18n/language-handlers.ts';
+import { setLanguage } from '../../i18n/utils';
 
-  function updateContent() {
+function updateContent() {
   const root = document.getElementById('language-selector-root');
   if (!root) return;
   
@@ -46,40 +47,51 @@ const availableLanguages = getAvailableLanguages();
   });
 }
 
-  // Initialize language handlers
-  setupLanguageHandlers(
-    'language-select',
-    'language-dropdown',
-    async (lang) => {
-      // Set the new language
-      setLanguage(lang);
-      
-      // Try to update content without reload first
-      const elements = document.querySelectorAll('[data-i18n-key]');
-      if (elements.length > 0) {
-        // If there are translatable elements, trigger a page reload
-        location.reload();
-      } else {
-        // If no translatable elements, just update the language selector
-        updateContent();
-        
-        // Dispatch event for other components that might need to update
-        window.dispatchEvent(
-          new CustomEvent('language-change', { 
-            detail: { language: lang } 
-          })
-        );
-      }
-    }
-  );
+function triggerTranslationUpdate(lang: string) {
+  // Dispatch multiple events to ensure translation updates
+  window.dispatchEvent(new CustomEvent('language-change', {
+    detail: { language: lang }
+  }));
+  
+  window.dispatchEvent(new CustomEvent('translation-update', {
+    detail: { language: lang }
+  }));
+}
 
-  // Set up initial state
-  document.addEventListener('astro:page-load', () => {
+// Initialize language handlers
+setupLanguageHandlers(
+  'language-select',
+  'language-dropdown',
+  async (lang) => {
+    console.log('Language handler triggered with:', lang);
+    
+    // Set the new language
+    setLanguage(lang);
+    
+    // Update content and trigger translation updates
     updateContent();
-  });
+    triggerTranslationUpdate(lang);
+    
+    // Dispatch custom event for other components
+    window.dispatchEvent(
+      new CustomEvent('language-change', {
+        detail: { language: lang }
+      })
+    );
+    
+    // Reload to ensure all translations are updated
+    location.reload();
+  }
+);
 
-  // Listen for language changes
-  languageStore.subscribe(() => {
-    updateContent();
-  });
+// Set up initial state
+document.addEventListener('astro:page-load', () => {
+  updateContent();
+});
+
+// Listen for language changes in the store
+languageStore.subscribe((lang) => {
+  updateContent();
+  triggerTranslationUpdate(lang);
+});
 </script>

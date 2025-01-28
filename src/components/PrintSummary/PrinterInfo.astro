@@ -1,18 +1,115 @@
 ---
 import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
-
 interface Props {
-  printerModels: string[];
+  printerModel?: string;
+  buildVolume?: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }
-
-const { printerModels } = Astro.props;
 const { t } = useTranslations(getCurrentLanguage());
 
-const printerText = printerModels.length === 1
-  ? t('printSummary.printer.single', { name: printerModels[0] })
-  : t('printSummary.printer.multiple', { names: printerModels.join(', ') });
+const {
+  printerModel = "Bambu Lab A1 mini",
+  buildVolume = { x: 180, y: 180, z: 180 }
+} = Astro.props;
 ---
 
-<div id="printer-models" class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-  {printerModels.length > 0 && printerText}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <div class="flex items-center justify-between">
+    <div class="space-y-1">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2"
+      data-i18n-key="printSummary.printer.settings"
+      >
+        <svg
+          class="w-5 h-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="6" y="2" width="12" height="18" rx="2" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="9" y1="22" x2="15" y2="22" />
+          <line x1="8" y1="6" x2="16" y2="6" />
+          <line x1="8" y1="10" x2="16" y2="10" />
+          <line x1="8" y1="14" x2="16" y2="14" />
+        </svg>
+        {t('printSummary.printer.settings')}
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400" id="current-printer">
+        {printerModel}
+      </p>
+    </div>
+    <button
+      class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+      aria-label="Configure printer settings"
+      id="toggle-settings"
+    >
+      <svg
+        class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="space-y-4 mt-4 hidden" id="printer-details">
+    <div>
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"  data-i18n-key="printSummary.printer.model">
+        {t('printSummary.printer.model')}
+      </h3>
+      <p class="text-gray-900 dark:text-white font-medium">
+        {printerModel}
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n-key="printSummary.printer.buildVolume">
+        {t('printSummary.printer.buildVolume')}
+      </h3>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+          <div class="text-xs text-gray-500 dark:text-gray-400" data-i18n-key="printSummary.printer.width">{t('printSummary.printer.width')}</div>
+          <div class="font-medium text-gray-900 dark:text-white">{buildVolume.x}mm</div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+          <div class="text-xs text-gray-500 dark:text-gray-400" data-i18n-key="printSummary.printer.depth">{t('printSummary.printer.depth')}</div>
+          <div class="font-medium text-gray-900 dark:text-white">{buildVolume.y}mm</div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+          <div class="text-xs text-gray-500 dark:text-gray-400" data-i18n-key="printSummary.printer.height">{t('printSummary.printer.height')}</div>
+          <div class="font-medium text-gray-900 dark:text-white" >{buildVolume.z}mm</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<script>
+  const configButton = document.getElementById('toggle-settings');
+  const printerDetails = document.getElementById('printer-details');
+  
+  if (configButton && printerDetails) {
+    configButton.addEventListener('click', () => {
+      printerDetails.classList.toggle('hidden');
+      // Rotate icon when expanded
+      const icon = configButton.querySelector('svg');
+      if (icon) {
+        icon.style.transform = printerDetails.classList.contains('hidden') 
+          ? '' 
+          : 'rotate(180deg)';
+      }
+    });
+  }
+</script>

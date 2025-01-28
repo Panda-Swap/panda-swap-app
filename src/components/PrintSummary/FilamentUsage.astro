@@ -1,6 +1,8 @@
 ---
 import type { GCodeFile } from '../../types/gcode';
+import { formatTime } from '../../utils/format-handlers';
 import { calculateFilamentUsage, generateFilamentDisplayHTML } from '../../utils/FileUpload/filament-calculator';
+import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
 
 interface Props {
   files: readonly GCodeFile[];
@@ -14,7 +16,76 @@ interface Props {
 }
 
 const { files, settings } = Astro.props;
-const usageData = calculateFilamentUsage(files, settings);
----
+const lang = getCurrentLanguage();
+const { t } = useTranslations(lang);
 
-<div class="space-y-2 mt-4" id="total-usage" set:html={generateFilamentDisplayHTML(usageData, settings)} />
+// Calculate initial filament usage
+const initialUsageData = calculateFilamentUsage(files, settings);
+const initialHtml = generateFilamentDisplayHTML(initialUsageData, settings, lang); // Pass language here
+---
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <div id="filament-usage-container">
+    {files?.length === 0 ? (
+      <div class="text-center py-4">
+        <p class="text-gray-500 dark:text-gray-400" i18n-key="printSummary.filament.noFilament">
+          {t('printSummary.filament.noFilament')}
+        </p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1" i18n-key="printSummary.filament.noFilamentTip">
+          {t('printSummary.filament.noFilamentTip')}
+        </p>
+      </div>
+    ) : (
+      <Fragment set:html={initialHtml} />
+    )}
+  </div>
+</div>
+
+<script>
+import { filesStore } from '../../store/file-store';
+import { settingsStore } from '../../store/settings-store';
+import { calculateFilamentUsage, generateFilamentDisplayHTML } from '../../utils/FileUpload/filament-calculator';
+import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
+
+function updateDisplay() {
+  const files = filesStore.get();
+  const settings = settingsStore.get();
+  const container = document.getElementById('filament-usage-container');
+  const lang = getCurrentLanguage();
+  const { t } = useTranslations(lang);
+
+  const noFilament = t('printSummary.filament.noFilament');
+  const noFilamentTip = t('printSummary.filament.noFilamentTip');
+
+  if (!container) return;
+
+  if (files?.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4">
+        <p class="text-gray-500 dark:text-gray-400" i18n-key="printSummary.filament.noFilament">
+          ${noFilament}
+        </p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1" i18n-key="printSummary.filament.noFilamentTip">
+          ${noFilamentTip}
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  // Calculate and display filament usage
+  const usageData = calculateFilamentUsage(files, settings);
+  container.innerHTML = generateFilamentDisplayHTML(usageData, settings, lang);
+}
+
+// Subscribe to store changes
+filesStore.subscribe(() => {
+  updateDisplay();
+});
+
+settingsStore.subscribe(() => {
+  updateDisplay();
+});
+
+// Initial update
+updateDisplay();
+</script>

@@ -26,21 +26,24 @@ export function getAvailableLanguages(): Record<string, string> {
 }
 
 export function getCurrentLanguage(): string {
-  return typeof window === 'undefined' 
+  const lang = typeof window === 'undefined'
     ? getServerSideLanguage()
     : languageStore.get();
+  
+  return lang;
 }
 
 export function setLanguage(lang: string) {
+  console.group('setLanguage');
+  
   if (!translations.has(lang)) {
     console.warn(`Translation for language ${lang} not found`);
+    console.groupEnd();
     return;
   }
   
   languageStore.set(lang as SupportedLanguage);
-  window.dispatchEvent(new CustomEvent('language-change', { 
-    detail: { language: lang } 
-  }));
+  console.groupEnd();
 }
 
 // Single interpolation function that handles {variable} format
@@ -52,8 +55,13 @@ export function interpolateVariables(text: string, variables?: Record<string, st
 }
 
 export function useTranslations(lang: string = getCurrentLanguage()) {
-  const translation = translations.get(lang) ?? translations.get(getCurrentLanguage())!;
+  const translation = translations.get(lang) ?? translations.get('en');
   
+  if (!translation) {
+    console.error(`No translations found for language: ${lang}`);
+    throw new Error(`No translations found for language: ${lang}`);
+  }
+
   return {
     t: function translate(key: string, variables?: Record<string, string | number>): string {
       try {
@@ -63,11 +71,16 @@ export function useTranslations(lang: string = getCurrentLanguage()) {
         // Safely traverse the translation object
         for (const k of keys) {
           value = value[k as keyof typeof value] as any;
-          if (value === undefined) throw new Error(`Translation key not found: ${key}`);
+          
+          if (value === undefined) {
+            console.warn(`Translation key not found: ${key}`);
+            return key;
+          }
         }
 
         if (typeof value !== 'string') {
-          throw new Error(`Translation key ${key} is not a string`);
+          console.warn(`Translation key ${key} is not a string`);
+          return key;
         }
 
         return variables ? interpolateVariables(value, variables) : value;
@@ -75,6 +88,12 @@ export function useTranslations(lang: string = getCurrentLanguage()) {
         console.warn(`Translation error:`, e);
         return key;
       }
-    }
+    },
+    lang
   };
+}
+
+// Add a global translation event
+export function triggerTranslationUpdate() {
+  window.dispatchEvent(new CustomEvent('translation-update'));
 }

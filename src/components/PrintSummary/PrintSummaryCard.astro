@@ -3,35 +3,220 @@ import CompileButton from './CompileButton.astro';
 import FilamentUsage from './FilamentUsage.astro';
 import PrinterInfo from './PrinterInfo.astro';
 import TotalStats from './TotalStats.astro';
+import Label from './Label.astro';
 import { filesStore } from '../../store/file-store';
 import { settingsStore } from '../../store/settings-store';
-import { calculateTotalTime, calculatePrinterModels } from '../../utils/PrintSummary/gcode-handlers';
+import { languageStore } from '../../store/language-store';
+import { getCurrentLanguage, useTranslations, getAvailableLanguages } from '../../i18n/utils';
 
-const initialFiles = filesStore.get();
+const files = filesStore.get();
 const settings = settingsStore.get();
-const totalTime = calculateTotalTime(initialFiles);
-const printerModels = calculatePrinterModels(initialFiles);
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+const lang = getCurrentLanguage();
+const translations = useTranslations(lang);
+const availableLanguages = getAvailableLanguages();
+
+// Helper function to translate
+const t = (key: string) => translations.t(key);
 ---
 
-<div id="print-summary" class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
-  <div class="flex justify-between items-start mb-4">
-    <div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100" data-i18n="printSummary.title"></h3>
-      <div id="total-cost" class="text-sm text-gray-600 dark:text-gray-400 mt-1"></div>
+<div 
+  class={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}
+  id="print-summary-card"
+  data-initial-lang={lang}
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <Label 
+            for="custom-name-input" 
+            id="export-name-label"
+            data-i18n-key="printSummary.exportName"
+          >{t('printSummary.exportName')}</Label>
+          <input 
+            type="text" 
+            id="custom-name-input" 
+            data-i18n-key="printSummary.exportNamePlaceholder"
+            placeholder={t('printSummary.exportNamePlaceholder')}
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                   dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+          />
+          <p 
+            id="export-name-tips" 
+            class="text-sm text-gray-500 dark:text-gray-400" 
+            data-i18n-key="printSummary.exportNameTips"
+          >
+            {t('printSummary.exportNameTips')}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <Label 
+            for="thumbnail-input" 
+            id="thumbnail-label"
+            data-i18n-key="printSummary.thumbnail"
+          >{t('printSummary.thumbnail')}</Label>
+
+          <div class="flex items-center gap-4">
+            <div 
+              id="thumbnail-preview" 
+              class="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg 
+                     flex items-center justify-center bg-gray-50 dark:bg-gray-700"
+            >
+              <svg 
+                class="w-8 h-8 text-gray-400 dark:text-gray-500" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round" 
+                  stroke-width="2" 
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                >
+                </path>
+              </svg>
+            </div>
+            <div class="space-y-2 flex-1">
+              <input
+              type="file"
+              id="thumbnail-input"
+              accept="image/*"
+              data-browse-text={t('fileUpload.browse')}
+              data-no-file-text={t('fileUpload.noFileSelected')}
+              aria-labelledby="thumbnail-input-label"
+              class="w-full text-sm text-gray-500 dark:text-gray-400
+               file:mr-4 file:py-2 file:px-4
+               file:rounded-md file:border-0
+               file:text-sm file:font-semibold
+               file:bg-blue-50 file:text-blue-700
+               hover:file:bg-blue-100
+               dark:file:bg-gray-700 dark:file:text-gray-200"
+            />
+              <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n-key="printSummary.thumbnailTips">
+                {t('printSummary.thumbnailTips')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div 
+          id="image-error" 
+          class="hidden p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 
+                 rounded-md text-red-700 dark:text-red-300"
+          data-i18n-key="printSummary.thumbnailError"
+        >
+        {t('printSummary.thumbnailError')}
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <TotalStats />
+        <FilamentUsage files={files} settings={settings} />
+        <PrinterInfo />
+      </div>
     </div>
-    <CompileButton disabled={initialFiles.length === 0} />
-  </div>
-  
-  <div class="grid grid-cols-1 gap-6">
-    <div>
-      <TotalStats totalTime={totalTime} />
-      <PrinterInfo printerModels={printerModels} />
-      <FilamentUsage files={initialFiles} settings={settings} />
+
+    <div class="flex justify-end gap-4">
+      <CompileButton />
     </div>
   </div>
 </div>
 
+
 <script>
-  import { setupPrintSummaryHandlers } from './printSummaryHandlers';
-  setupPrintSummaryHandlers();
-</script>
+  import { languageStore } from '../../store/language-store';
+  import { useTranslations } from '../../i18n/utils';
+  
+  // Define a custom event interface
+  interface LanguageChangeEvent extends Event {
+    detail: {
+      language: string;
+    };
+  }
+  
+  function updateTranslations(currentLang: string) {
+    const { t } = useTranslations(currentLang);
+  
+    // Update labels and placeholders
+    const elementMappings = [
+      { id: 'export-name-label', key: 'printSummary.exportName' },
+      { id: 'custom-name-input', key: 'printSummary.exportNamePlaceholder', type: 'placeholder' },
+      { id: 'export-name-tips', key: 'printSummary.exportNameTips' },
+      { id: 'thumbnail-label', key: 'printSummary.thumbnail' }
+    ];
+  
+    elementMappings.forEach(mapping => {
+      const element = document.getElementById(mapping.id);
+      if (element) {
+        if (mapping.type === 'placeholder') {
+          element.setAttribute('placeholder', t(mapping.key));
+        } else {
+          element.textContent = t(mapping.key);
+        }
+      }
+    });
+  }
+
+  function updateFileInputTranslations(currentLang: string) {
+  const { t } = useTranslations(currentLang);
+
+  // Update file input translations
+  const thumbnailInput = document.getElementById('thumbnail-input') as HTMLInputElement;
+  
+  if (thumbnailInput) {
+    // Update browse button text
+    const style = document.createElement('style');
+    style.textContent = `
+      #thumbnail-input::file-selector-button {
+        content: "${t('fileUpload.browse')}";
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Handle file selection text
+    thumbnailInput.addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      const noFileText = t('fileUpload.noFileSelected');
+      
+      if (input.files && input.files.length > 0) {
+        const fileName = input.files[0].name;
+        input.setAttribute('title', fileName);
+      } else {
+        input.setAttribute('title', noFileText);
+      }
+    });
+  }
+}
+  
+  // Initial setup
+  const printSummaryCard = document.getElementById('print-summary-card');
+  const initialLang = printSummaryCard?.dataset.initialLang || 'en';
+  updateTranslations(initialLang);
+  
+  // Listen for language change events
+  window.addEventListener('language-change', ((event: LanguageChangeEvent) => {
+    const newLang = event.detail.language;
+    updateTranslations(newLang);
+  }) as EventListener);
+  
+  // Listen for translation update events
+  window.addEventListener('translation-update', (() => {
+    const currentLang = languageStore.get();
+    updateTranslations(currentLang);
+  }) as EventListener);
+  
+  // Listen to language store changes
+  languageStore.subscribe((newLang) => {
+    updateTranslations(newLang);
+  });
+  </script>

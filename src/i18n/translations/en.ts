@@ -43,18 +43,30 @@ const translations: TranslationKeys = {
     inputLabel: 'File Input',
   },
   printSummary: {
-    title: "Print Summary",
-    compileGcode: "Compile",
+    exportName: "Custom Export Name",
+    exportNamePlaceholder: "Enter a name for the export",
+    exportNameTips: "This will be the name of the exported file. Leave blank to use the default name.",
+    thumbnail: "Thumbnail",
+    thumbnailTips: "Image will be resized to 512x512 and 128x128 for thumbnails",
+    thumbnailError: "Error processing image. Please ensure it's a valid image file.",
+    compileGcode: "Download gcode",
+    compile3mf: "Download 3mf",
     totalPrintTime: "Total print time: {time}",
     totalCost: "Total cost: {cost}",
     printer: {
-      single: "Printer: {name}",
-      multiple: "Printers: {names}"
+      settings: "Printer Settings",
+      model: "Printer Model",
+      buildVolume: "Build Volume",
+      width: "Width",
+      depth: "Depth",
+      height: "Height",
     },
     filament: {
       slot: "Filament {number}",
       weight: "{amount}g",
-      cost: "${amount}"
+      cost: "${amount}",
+      noFilament: "No files uploaded yet",
+      noFilamentTip: "Upload some G-code files to see filament usage",
     }
   },
   fileList: {

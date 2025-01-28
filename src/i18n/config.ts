@@ -43,18 +43,29 @@ export type TranslationKeys = {
       inputLabel: string
     };
     printSummary: {
-        title: string;
+        exportName: string;
+        exportNamePlaceholder: string;
+        exportNameTips: string;
+        thumbnail: string;
+        thumbnailTips: string;
+        thumbnailError: string;
         compileGcode: string;
         totalPrintTime: string;
         totalCost: string;
         printer: {
-          single: string;
-          multiple: string;
+          settings: string;
+          model: string;
+          buildVolume: string;
+          width: string;
+          depth: string;
+          height: string;
         };
         filament: {
           slot: string;
           weight: string;
           cost: string;
+          noFilament: string;
+          noFilamentTip: string;
         };
       };
       fileList: {

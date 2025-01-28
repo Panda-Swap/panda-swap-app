@@ -1,18 +1,117 @@
 ---
+import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
 interface Props {
-  disabled: boolean;
+  class?: string;
 }
 
-const { disabled } = Astro.props;
+const { t } = useTranslations(getCurrentLanguage());
+
+const { class: className = '' } = Astro.props;
 ---
 
-<button
-  id="compile-button"
-  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-  disabled={disabled}
->
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-    <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z" clip-rule="evenodd"/>
-  </svg>
-  <span data-i18n="printSummary.compileGcode"></span>
-</button>
+<div class={`flex gap-3 ${className}`}>
+  <button
+    id="compile-button"
+    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm 
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600
+           transition-colors duration-200"
+    disabled
+    data-i18n-key="printSummary.compileGcode"
+  >
+  {t('printSummary.compileGcode')}
+  </button>
+  <button
+    id="compile-3mf-button"
+    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm 
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600
+           transition-colors duration-200"
+    disabled
+    data-i18n-key="printSummary.compile3mf"
+  >
+  {t('printSummary.compile3mf')}
+  </button>
+</div>
+
+<script>
+  import { filesStore } from '../../store/file-store';
+  import { compileGCode, downloadGCode, compile3MF, download3MF, type ExportOptions } from '../../utils/PrintSummary/gcode-handlers';
+
+  function getExportOptions(): ExportOptions {
+    const customNameInput = document.getElementById('custom-name-input') as HTMLInputElement;
+    const thumbnailInput = document.getElementById('thumbnail-input') as HTMLInputElement;
+    
+    const options: ExportOptions = {};
+    
+    if (customNameInput?.value) {
+      options.customName = customNameInput.value.trim();
+    }
+    
+    if (thumbnailInput?.files && thumbnailInput.files[0]) {
+      options.thumbnailImage = thumbnailInput.files[0];
+    }
+    
+    return options;
+  }
+
+  function initializeButtons() {
+    const compileButton = document.getElementById('compile-button');
+    const compile3mfButton = document.getElementById('compile-3mf-button');
+
+    if (!compileButton || !compile3mfButton) return;
+
+    // Update button states based on file store
+    filesStore.subscribe(files => {
+      const hasFiles = files.length > 0;
+      compileButton.disabled = !hasFiles;
+      compile3mfButton.disabled = !hasFiles;
+    });
+
+    // GCode export handler
+    compileButton.addEventListener('click', async () => {
+      try {
+        const files = filesStore.get();
+        if (files.length > 0) {
+          compileButton.disabled = true;
+          compileButton.textContent = 'Exporting...';
+
+          const compiledGCode = compileGCode(files);
+          downloadGCode(compiledGCode, getExportOptions());
+        }
+      } catch (error) {
+        console.error('Error exporting GCode:', error);
+      } finally {
+        compileButton.disabled = false;
+        compileButton.textContent = 'Export GCode';
+      }
+    });
+
+    // 3MF export handler
+    compile3mfButton.addEventListener('click', async () => {
+      try {
+        const files = filesStore.get();
+        if (files.length > 0) {
+          compile3mfButton.disabled = true;
+          compile3mfButton.textContent = 'Exporting...';
+
+          const compiledGCode = compileGCode(files);
+          const options = getExportOptions();
+          const blob = await compile3MF(compiledGCode, options);
+          download3MF(blob, options);
+        }
+      } catch (error) {
+        console.error('Error exporting 3MF:', error);
+      } finally {
+        compile3mfButton.disabled = false;
+        compile3mfButton.textContent = 'Export 3MF';
+      }
+    });
+  }
+
+  // Initialize when the component mounts
+  initializeButtons();
+
+  // Cleanup function example (if needed)
+  document.addEventListener('astro:before-swap', () => {
+    // Any cleanup needed when the component is removed
+  });
+</script>

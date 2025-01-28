@@ -36,17 +36,32 @@ export const languageStore = {
   },
   
   set(value: SupportedLanguage): void {
+
     if (isValidLanguage(value)) {
+
       this.private.set(value);
+      
       if (typeof window !== 'undefined') {
         localStorage.setItem(LANG_STORAGE_KEY, value);
         document.documentElement.setAttribute('lang', value);
+        
+        // Dispatch multiple events
+        window.dispatchEvent(new CustomEvent('language-change', {
+          detail: { language: value }
+        }));
+        window.dispatchEvent(new CustomEvent('translation-update'));
       }
+    } else {
+      console.warn('Invalid language:', value);
     }
+    
+    console.groupEnd();
   },
   
   subscribe(callback: (value: SupportedLanguage) => void): () => void {
-    return this.private.subscribe(callback);
+    return this.private.subscribe((value) => {
+      callback(value);
+    });
   }
 };
 

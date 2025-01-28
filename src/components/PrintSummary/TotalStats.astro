@@ -1,16 +1,53 @@
 ---
 import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
+import { filesStore } from '../../store/file-store';
+import { calculateTotalTime } from '../../utils/PrintSummary/gcode-handlers';
 import { formatTime } from '../../utils/format-handlers';
 
-interface Props {
-  totalTime: number;
-}
-
-const { totalTime } = Astro.props;
+const files = filesStore.get();
+const totalTime = calculateTotalTime(files || []);
 const { t } = useTranslations(getCurrentLanguage());
-const formattedTime = formatTime(totalTime);
+
+const totalTimeText = t('printSummary.totalPrintTime', {
+  time: formatTime(totalTime)
+});
 ---
 
-<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" id="total-time">
-  {t('printSummary.totalPrintTime', { time: formattedTime })}
-</h4>
+<div class="total-stats">
+  <div id="total-time" class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    {totalTimeText}
+  </div>
+</div>
+
+<script>
+  import { filesStore } from '../../store/file-store';
+  import { calculateTotalTime } from '../../utils/PrintSummary/gcode-handlers';
+  import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
+  import { formatTime } from '../../utils/format-handlers';
+
+  function updateTotalTime() {
+    const files = filesStore.get();
+    const totalTime = calculateTotalTime(files || []);
+    const { t } = useTranslations(getCurrentLanguage());
+    
+    const element = document.getElementById('total-time');
+    if (!element) return;
+
+    const totalTimeText = t('printSummary.totalPrintTime', {
+      time: formatTime(totalTime)
+    });
+
+    element.textContent = totalTimeText;
+  }
+
+  // Initialize
+  updateTotalTime();
+
+  // Subscribe to changes
+  filesStore.subscribe(() => {
+    updateTotalTime();
+  });
+
+  // Update when language changes
+  window.addEventListener('language-change', updateTotalTime);
+</script>
