@@ -53,16 +53,6 @@ const { t } = useTranslations(currentLang);
         />
       </SettingsSection>
 
-
-      <SettingsSection title={t('settings.gcode.title')} group="gcode">
-        <TextareaSetting
-          label={t('settings.gcode.buildPlateSwap')}
-          name="buildPlateSwap"
-          group="gcode"
-          value={initialSettings.gcode.buildPlateSwap}
-        />
-      </SettingsSection>
-
       <SettingsSection title={t('settings.preview.title')} group="preview">
         <ToggleSetting
           label={t('settings.preview.renderTubes')}

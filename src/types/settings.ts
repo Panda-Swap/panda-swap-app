@@ -19,4 +19,5 @@ export interface Settings {
   preview: PreviewSettings;
   display: DisplaySettings;
   gcode: GCodeSettings;
+  custom: GCodeSettings;
 }

@@ -1,5 +1,7 @@
 ---
 import { getCurrentLanguage, useTranslations } from '../../i18n/utils';
+import { getSettings, updateSettings, type Settings } from '../../store/settings-store';
+
 interface Props {
   printerModel?: string;
   buildVolume?: {
@@ -8,15 +10,62 @@ interface Props {
     z: number;
   };
 }
+
 const { t } = useTranslations(getCurrentLanguage());
+const settings = getSettings();
 
 const {
   printerModel = "Bambu Lab A1 mini",
   buildVolume = { x: 180, y: 180, z: 180 }
 } = Astro.props;
----
 
+const SWAP_SYSTEMS = {
+  none: {
+    name: "No Swap System",
+    gcode: ""
+  },
+  swapmod: {
+    name: "SwapMod / Swap-Systems",
+    gcode: `G1 Z180 F3000
+G1 Y186 F6000
+G1 Z185 F3000
+G1 Y-4 F6000
+G1 Y186 F6000
+G1 Y-4 F6000
+G1 Y2.5 F6000
+G1 Y-4 F6000`
+  },
+  abpc: {
+    name: "Auto Build Plate Changer",
+    gcode: `; Auto Build Plate Changer sequence
+G1 Z150 F1200 ; Move up for plate removal
+M117 Initiating plate change
+G1 Y200 F6000 ; Move to plate change position
+M42 P0 S255 ; Activate ejector (adjust pin as needed)
+G4 P1000 ; Wait for ejection
+M42 P0 S0 ; Deactivate ejector
+G1 Y0 F6000 ; Return to home position
+G28 Z ; Re-home Z axis`
+  }
+} as const;
+
+// Get the currently selected system based on stored gcode
+const getCurrentSystem = (settings: Settings) => {
+  // First check if there's a custom config
+  if (settings.custom?.buildPlateSwap) {
+    return 'custom';
+  }
+  // Then check presets
+  for (const [key, system] of Object.entries(SWAP_SYSTEMS)) {
+    if (system.gcode === settings.gcode.buildPlateSwap) return key;
+  }
+  return 'none';
+};
+
+const currentSystem = getCurrentSystem(settings);
+---
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <!-- Previous printer info and build volume sections remain unchanged -->
   <div class="flex items-center justify-between">
     <div class="space-y-1">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2"
@@ -65,8 +114,9 @@ const {
   </div>
 
   <div class="space-y-4 mt-4 hidden" id="printer-details">
+    <!-- Previous printer model and build volume sections remain unchanged -->
     <div>
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"  data-i18n-key="printSummary.printer.model">
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n-key="printSummary.printer.model">
         {t('printSummary.printer.model')}
       </h3>
       <p class="text-gray-900 dark:text-white font-medium">
@@ -89,27 +139,191 @@ const {
         </div>
         <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
           <div class="text-xs text-gray-500 dark:text-gray-400" data-i18n-key="printSummary.printer.height">{t('printSummary.printer.height')}</div>
-          <div class="font-medium text-gray-900 dark:text-white" >{buildVolume.z}mm</div>
+          <div class="font-medium text-gray-900 dark:text-white">{buildVolume.z}mm</div>
         </div>
       </div>
     </div>
+
+<!-- Build Plate Swap System Configuration -->
+<div class="mt-6">
+  <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    Build Plate Swap System
+  </h3>
+  <select
+    id="swap-system-select"
+    class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-4"
+  >
+    {Object.entries(SWAP_SYSTEMS).map(([key, config]) => (
+      <option value={key} selected={key === currentSystem}>
+        {config.name}
+      </option>
+    ))}
+    <option value="custom" selected={currentSystem === 'custom'}>
+      Custom Configuration
+    </option>
+  </select>
+
+  <div class="mt-4">
+    <button
+      id="toggle-gcode"
+      class="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+    >
+      Show G-code
+      <svg
+        class="w-4 h-4 transform transition-transform"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+
+    <div id="gcode-editor" class="hidden mt-4">
+      <textarea
+        id="gcode-textarea"
+        class="w-full h-40 p-3 font-mono text-sm bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+        spellcheck="false"
+      >{settings.custom?.buildPlateSwap || settings.gcode.buildPlateSwap}</textarea>
+    </div>
   </div>
+</div>
+</div>
 </div>
 
 <script>
-  const configButton = document.getElementById('toggle-settings');
-  const printerDetails = document.getElementById('printer-details');
-  
-  if (configButton && printerDetails) {
-    configButton.addEventListener('click', () => {
-      printerDetails.classList.toggle('hidden');
-      // Rotate icon when expanded
-      const icon = configButton.querySelector('svg');
-      if (icon) {
-        icon.style.transform = printerDetails.classList.contains('hidden') 
-          ? '' 
-          : 'rotate(180deg)';
-      }
-    });
+import { getSettings, updateSettings } from '../../store/settings-store';
+import { SWAP_SYSTEMS, type SwapSystemType } from '../../constants/printer';
+
+// DOM elements
+const configButton = document.getElementById('toggle-settings');
+const printerDetails = document.getElementById('printer-details');
+const swapSystemSelect = document.getElementById('swap-system-select') as HTMLSelectElement;
+const gcodeToggle = document.getElementById('toggle-gcode');
+const gcodeEditor = document.getElementById('gcode-editor');
+const gcodeTextarea = document.getElementById('gcode-textarea') as HTMLTextAreaElement;
+
+// Toggle settings visibility
+if (configButton && printerDetails) {
+configButton.addEventListener('click', () => {
+  printerDetails.classList.toggle('hidden');
+  const icon = configButton.querySelector('svg');
+  if (icon) {
+    icon.style.transform = printerDetails.classList.contains('hidden') 
+      ? '' 
+      : 'rotate(180deg)';
   }
+});
+}
+
+let savedCustomGcode: string | undefined = getSettings().custom?.buildPlateSwap;
+
+// Handle swap system changes
+if (swapSystemSelect && gcodeTextarea) {
+  swapSystemSelect.addEventListener('change', (e) => {
+    const target = e.target as HTMLSelectElement;
+    const selectedSystem = target.value as SwapSystemType | 'custom';
+    const currentSettings = getSettings();
+    
+    if (selectedSystem === 'custom') {
+      // When switching to custom mode, ALWAYS use the stored custom config
+      // and NEVER overwrite it with the current gcode
+      if (currentSettings.custom.buildPlateSwap) {
+        // If we have a custom config, use it
+        gcodeTextarea.value = currentSettings.custom.buildPlateSwap;
+        
+        // Update only the working gcode
+        updateSettings({
+          ...currentSettings,
+          gcode: {
+            ...currentSettings.gcode,
+            buildPlateSwap: currentSettings.custom.buildPlateSwap
+          }
+        });
+      } else {
+        // If no custom config exists, create it from current gcode
+        const newCustomGcode = currentSettings.gcode.buildPlateSwap;
+        gcodeTextarea.value = newCustomGcode;
+        
+        // Create the initial custom config
+        updateSettings({
+          ...currentSettings,
+          custom: {
+            ...currentSettings.custom,
+            buildPlateSwap: newCustomGcode
+          },
+          gcode: {
+            ...currentSettings.gcode,
+            buildPlateSwap: newCustomGcode
+          }
+        });
+      }
+      
+      gcodeTextarea.readOnly = false;
+      
+    } else if (selectedSystem in SWAP_SYSTEMS) {
+      // When switching to a preset, ONLY update the working gcode
+      const newGcode = SWAP_SYSTEMS[selectedSystem as SwapSystemType].gcode;
+      gcodeTextarea.value = newGcode;
+      gcodeTextarea.readOnly = true;
+
+      // Only update the working gcode, preserve custom config exactly as is
+      updateSettings({
+        ...currentSettings,
+        gcode: {
+          ...currentSettings.gcode,
+          buildPlateSwap: newGcode
+        }
+      });
+    }
+  });
+}
+
+// Handle custom G-code edits
+if (gcodeTextarea) {
+  gcodeTextarea.addEventListener('input', (e) => {
+    const target = e.target as HTMLTextAreaElement;
+    const selectedSystem = swapSystemSelect?.value as SwapSystemType | 'custom';
+    const currentSettings = getSettings();
+
+    if (selectedSystem === 'custom') {
+      // When in custom mode, update both storages
+      const newValue = target.value;
+      
+      updateSettings({
+        ...currentSettings,
+        gcode: {
+          ...currentSettings.gcode,
+          buildPlateSwap: newValue
+        },
+        custom: {
+          ...currentSettings.custom,
+          buildPlateSwap: newValue
+        }
+      });
+    }
+  });
+}
+// Handle G-code editor toggle
+if (gcodeToggle && gcodeEditor) {
+  gcodeToggle.addEventListener('click', () => {
+    const isHidden = gcodeEditor.classList.toggle('hidden');
+    const icon = gcodeToggle.querySelector('svg');
+    if (icon) {
+      icon.style.transform = isHidden ? '' : 'rotate(180deg)';
+    }
+    
+    // Update text content by finding or creating a text node
+    let textNode = Array.from(gcodeToggle.childNodes)
+      .find(node => node.nodeType === Node.TEXT_NODE);
+    
+    if (!textNode) {
+      textNode = document.createTextNode('');
+      gcodeToggle.insertBefore(textNode, gcodeToggle.firstChild);
+    }
+    
+    textNode.textContent = isHidden ? 'Show G-code' : 'Hide G-code';
+  });
+}
 </script>

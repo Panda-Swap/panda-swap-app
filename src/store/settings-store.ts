@@ -24,6 +24,9 @@ G1 Y186 F6000
 G1 Y-4  F6000
 G1 Y2.5 F6000
 G1 Y-4  F6000`,
+  },
+  custom: {
+    buildPlateSwap: ``
   }
 };
 
@@ -38,7 +41,8 @@ export const settingsStore = persistentAtom<Settings>(
         return {
           preview: { ...DEFAULT_SETTINGS.preview, ...parsed.preview },
           display: { ...DEFAULT_SETTINGS.display, ...parsed.display },
-          gcode: { ...DEFAULT_SETTINGS.gcode, ...parsed.gcode }
+          gcode: { ...DEFAULT_SETTINGS.gcode, ...parsed.gcode },
+          custom: { ...DEFAULT_SETTINGS.custom, ...parsed.custom },
         };
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -57,7 +61,8 @@ export function updateSettings(newSettings: Partial<Settings>): void {
   const updatedSettings = {
     preview: { ...currentSettings.preview, ...(newSettings.preview || {}) },
     display: { ...currentSettings.display, ...(newSettings.display || {}) },
-    gcode: { ...currentSettings.gcode, ...(newSettings.gcode || {}) }
+    gcode: { ...currentSettings.gcode, ...(newSettings.gcode || {}) },
+    custom: { ...currentSettings.custom, ...(newSettings.custom || {})}
   };
   
   settingsStore.set(updatedSettings);
